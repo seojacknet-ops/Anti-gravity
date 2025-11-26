@@ -15,6 +15,8 @@ export const metadata: Metadata = {
 
 import { Toaster } from "@/components/ui/sonner";
 
+import { AppShell } from "@/components/layout/AppShell";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,16 +31,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="flex min-h-screen">
-            <Sidebar />
-            <div className="flex-1 flex flex-col md:ml-64 transition-all duration-300">
-              <Header />
-              <main className="flex-1 p-6 md:p-8 max-w-7xl mx-auto w-full animate-fade-in">
-                {children}
-              </main>
-            </div>
-          </div>
-          <Toaster />
+          <AppShell>
+            {children}
+          </AppShell>
+          <Toaster position="bottom-right" />
         </ThemeProvider>
       </body>
     </html>

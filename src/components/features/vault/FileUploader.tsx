@@ -4,12 +4,19 @@ import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { UploadCloud } from 'lucide-react';
 
+import { toast } from "sonner";
+
+import { useMediaStore } from '@/lib/store/media-store';
+
 export const FileUploader = () => {
+    const { uploadFile, isUploading } = useMediaStore();
+
     const onDrop = useCallback((acceptedFiles: File[]) => {
-        // Handle file upload logic here (e.g., upload to S3)
-        console.log('Files dropped:', acceptedFiles);
-        alert(`Ready to upload ${acceptedFiles.length} files!`);
-    }, []);
+        // Upload each file
+        acceptedFiles.forEach(file => {
+            uploadFile(file);
+        });
+    }, [uploadFile]);
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
@@ -26,7 +33,7 @@ export const FileUploader = () => {
                 </div>
                 <div>
                     <p className="text-lg font-medium text-gray-900">
-                        {isDragActive ? 'Drop files here...' : 'Click to upload or drag and drop'}
+                        {isUploading ? 'Uploading...' : isDragActive ? 'Drop files here...' : 'Click to upload or drag and drop'}
                     </p>
                     <p className="text-sm text-gray-500 mt-1">SVG, PNG, JPG or GIF (max. 10MB)</p>
                 </div>

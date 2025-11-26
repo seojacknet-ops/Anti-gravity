@@ -14,6 +14,7 @@ interface WizardLayoutProps {
     onNext: () => void
     onBack?: () => void
     isNextDisabled?: boolean
+    isNextLoading?: boolean
     nextLabel?: string
 }
 
@@ -24,6 +25,7 @@ export const WizardLayout = ({
     onNext,
     onBack,
     isNextDisabled = false,
+    isNextLoading = false,
     nextLabel = "Next Step",
 }: WizardLayoutProps) => {
     const { currentStep } = useOnboardingStore()
@@ -58,7 +60,7 @@ export const WizardLayout = ({
                 <Button
                     variant="ghost"
                     onClick={onBack}
-                    disabled={!onBack}
+                    disabled={!onBack || isNextLoading}
                     className={cn(!onBack && "invisible")}
                 >
                     <ArrowLeft className="w-4 h-4 mr-2" />
@@ -66,14 +68,23 @@ export const WizardLayout = ({
                 </Button>
 
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" className="hidden sm:flex" onClick={() => window.open('/chat', '_blank')}>
+                    <Button variant="outline" className="hidden sm:flex" onClick={() => window.open('/chat', '_blank')} disabled={isNextLoading}>
                         <MessageCircle className="w-4 h-4 mr-2" />
                         Ask for Help
                     </Button>
 
-                    <Button onClick={onNext} disabled={isNextDisabled} className="min-w-[120px]">
-                        {nextLabel}
-                        <ArrowRight className="w-4 h-4 ml-2" />
+                    <Button onClick={onNext} disabled={isNextDisabled || isNextLoading} className="min-w-[120px]">
+                        {isNextLoading ? (
+                            <>
+                                <span className="animate-spin mr-2">⏳</span>
+                                Saving...
+                            </>
+                        ) : (
+                            <>
+                                {nextLabel}
+                                <ArrowRight className="w-4 h-4 ml-2" />
+                            </>
+                        )}
                     </Button>
                 </div>
             </div>

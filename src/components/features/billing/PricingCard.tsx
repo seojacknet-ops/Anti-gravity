@@ -13,8 +13,7 @@ interface PricingCardProps {
 }
 
 export const PricingCard = ({ plan }: PricingCardProps) => {
-    const { currentPlan, upgradePlan, downgradePlan } = useBillingStore()
-    const [isLoading, setIsLoading] = React.useState(false)
+    const { currentPlan, upgradePlan, downgradePlan, isLoading } = useBillingStore()
     const isCurrent = currentPlan === plan.id
 
     // Simple logic to determine if it's an upgrade or downgrade
@@ -26,20 +25,13 @@ export const PricingCard = ({ plan }: PricingCardProps) => {
     const handleAction = async () => {
         if (isCurrent) return
 
-        setIsLoading(true)
-
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1000))
-
         if (isUpgrade) {
-            upgradePlan(plan.id)
+            await upgradePlan(plan.id)
             toast.success(`Upgraded to ${plan.name} plan!`)
         } else {
-            downgradePlan(plan.id)
+            await downgradePlan(plan.id)
             toast.success(`Switched to ${plan.name} plan`)
         }
-
-        setIsLoading(false)
     }
 
     return (

@@ -132,11 +132,30 @@ h3,
 h4,
 h5,
 h6 {
-  color: #ffffff;
   font-weight: 700;
   /* Bold */
   letter-spacing: -0.02em;
   /* tracking-tight */
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  opacity: 0.5;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
 }
 
 @layer base {

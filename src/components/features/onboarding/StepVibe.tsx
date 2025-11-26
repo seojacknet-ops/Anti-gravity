@@ -10,24 +10,24 @@ import { cn } from "@/lib/utils"
 import { Palette, LayoutTemplate, Zap } from "lucide-react"
 
 export const StepVibe = () => {
-    const { data, setData, setStep } = useOnboardingStore()
+    const { data, updateVisualDirection, setStep } = useOnboardingStore()
     const [customColor, setCustomColor] = React.useState("")
 
     const styles = [
         {
-            id: "modern",
+            id: "modern-sleek",
             title: "Modern & Clean",
             description: "Minimalist, lots of whitespace, sans-serif fonts.",
             icon: LayoutTemplate,
         },
         {
-            id: "classic",
+            id: "traditional-trustworthy",
             title: "Classic & Trust",
             description: "Serif fonts, traditional layouts, corporate feel.",
             icon: Palette,
         },
         {
-            id: "bold",
+            id: "bold-confident",
             title: "Bold & Electric",
             description: "High contrast, vibrant colors, unique typography.",
             icon: Zap,
@@ -39,8 +39,8 @@ export const StepVibe = () => {
     }
 
     const addColor = () => {
-        if (customColor && !data.brandColors.includes(customColor)) {
-            setData({ brandColors: [...data.brandColors, customColor] })
+        if (customColor && !data.visualDirection.customColors.includes(customColor)) {
+            updateVisualDirection({ customColors: [...data.visualDirection.customColors, customColor] })
             setCustomColor("")
         }
     }
@@ -50,7 +50,7 @@ export const StepVibe = () => {
             title="Let's set the Vibe"
             description="Choose a style that matches your brand personality."
             onNext={handleNext}
-            isNextDisabled={!data.style}
+            isNextDisabled={!data.visualDirection.vibe}
         >
             <div className="space-y-8">
                 {/* Style Selection */}
@@ -60,13 +60,13 @@ export const StepVibe = () => {
                             key={style.id}
                             className={cn(
                                 "cursor-pointer hover:border-brand-purple transition-all p-4 space-y-3",
-                                data.style === style.id ? "border-brand-purple bg-brand-purple/5 ring-1 ring-brand-purple" : "border-input"
+                                data.visualDirection.vibe === style.id ? "border-brand-purple bg-brand-purple/5 ring-1 ring-brand-purple" : "border-input"
                             )}
-                            onClick={() => setData({ style: style.id })}
+                            onClick={() => updateVisualDirection({ vibe: style.id as any })}
                         >
                             <div className={cn(
                                 "w-10 h-10 rounded-full flex items-center justify-center",
-                                data.style === style.id ? "bg-brand-purple text-white" : "bg-secondary text-muted-foreground"
+                                data.visualDirection.vibe === style.id ? "bg-brand-purple text-white" : "bg-secondary text-muted-foreground"
                             )}>
                                 <style.icon className="w-5 h-5" />
                             </div>
@@ -97,12 +97,12 @@ export const StepVibe = () => {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                        {data.brandColors.map((color, index) => (
+                        {data.visualDirection.customColors.map((color, index) => (
                             <div key={index} className="flex items-center gap-2 bg-secondary px-3 py-1.5 rounded-full">
                                 <div className="w-4 h-4 rounded-full border border-border" style={{ backgroundColor: color }} />
                                 <span className="text-sm font-mono">{color}</span>
                                 <button
-                                    onClick={() => setData({ brandColors: data.brandColors.filter((_, i) => i !== index) })}
+                                    onClick={() => updateVisualDirection({ customColors: data.visualDirection.customColors.filter((_, i) => i !== index) })}
                                     className="ml-1 text-muted-foreground hover:text-destructive"
                                 >
                                     ×

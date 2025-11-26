@@ -3,9 +3,34 @@
 import React, { useState } from 'react';
 import { MessageSquare, X, Send, Paperclip } from 'lucide-react';
 
+import { useChatStore } from '@/lib/store/chat-store';
+import { cn } from '@/lib/utils';
+
 export const ChatWidget = () => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [message, setMessage] = useState('');
+    const { isOpen, setIsOpen, messages, sendMessage, subscribeToMessages } = useChatStore();
+    const [inputValue, setInputValue] = useState('');
+    const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        const unsubscribe = subscribeToMessages();
+        return () => unsubscribe();
+    }, [subscribeToMessages]);
+
+    React.useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    const handleSend = async () => {
+        if (!inputValue.trim()) return;
+        await sendMessage(inputValue);
+        setInputValue('');
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleSend();
+        }
+    };
 
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
@@ -26,19 +51,28 @@ export const ChatWidget = () => {
                     {/* Messages Area */}
                     <div className="flex-1 bg-gray-50 p-4 overflow-y-auto">
                         <div className="flex flex-col space-y-4">
-                            {/* Bot Message */}
+                            {/* Bot Message - Always show welcome */}
                             <div className="flex items-start">
                                 <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-3 max-w-[80%] shadow-sm">
                                     <p className="text-sm text-gray-800">Hi there! 👋 How can we help you with your site today?</p>
                                 </div>
                             </div>
 
-                            {/* User Message Example */}
-                            {/* <div className="flex items-end justify-end">
-                <div className="bg-brand-purple text-white rounded-2xl rounded-tr-none p-3 max-w-[80%] shadow-sm">
-                  <p className="text-sm">I need help with my logo.</p>
-                </div>
-              </div> */}
+                            {/* Dynamic Messages */}
+                            {messages.map((msg) => {
+                                const isUser = msg.senderId !== 'support-agent' && msg.senderId !== 'system'; // Simple check
+                                return (
+                                    <div key={msg.id} className={cn("flex", isUser ? "items-end justify-end" : "items-start")}>
+                                        <div className={cn(
+                                            "rounded-2xl p-3 max-w-[80%] shadow-sm",
+                                            isUser ? "bg-brand-purple text-white rounded-tr-none" : "bg-white border border-gray-200 rounded-tl-none"
+                                        )}>
+                                            <p className="text-sm">{msg.text}</p>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                            <div ref={messagesEndRef} />
                         </div>
                     </div>
 
@@ -52,10 +86,14 @@ export const ChatWidget = () => {
                                 type="text"
                                 placeholder="Type a message..."
                                 className="flex-1 border-none focus:ring-0 bg-gray-50 rounded-full px-4 py-2 text-sm"
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                onKeyDown={handleKeyDown}
                             />
-                            <button className="bg-brand-purple text-white p-2 rounded-full hover:bg-brand-purple-dark transition-colors">
+                            <button
+                                onClick={handleSend}
+                                className="bg-brand-purple text-white p-2 rounded-full hover:bg-brand-purple-dark transition-colors"
+                            >
                                 <Send className="w-4 h-4" />
                             </button>
                         </div>

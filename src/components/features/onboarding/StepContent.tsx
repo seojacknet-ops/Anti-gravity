@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Upload, FileImage } from "lucide-react"
 
 export const StepContent = () => {
-    const { data, setData, setStep } = useOnboardingStore()
+    const { data, updateVisualDirection, updateBrandVoice, setStep } = useOnboardingStore()
 
     const handleNext = () => {
         setStep(3)
@@ -23,7 +23,8 @@ export const StepContent = () => {
         const file = e.target.files?.[0]
         if (file) {
             // In a real app, we'd upload to S3 here
-            setData({ logo: file.name })
+            // setData({ logo: file.name }) // Removed
+            updateVisualDirection({ logoUrl: file.name })
         }
     }
 
@@ -33,7 +34,7 @@ export const StepContent = () => {
             description="Upload your logo and tell us a bit about your business."
             onNext={handleNext}
             onBack={handleBack}
-            isNextDisabled={!data.bio}
+            isNextDisabled={!data.brandVoice.pubDescription}
         >
             <div className="space-y-8">
                 {/* Logo Upload */}
@@ -47,10 +48,10 @@ export const StepContent = () => {
                             accept="image/*"
                         />
                         <div className="flex flex-col items-center gap-2">
-                            {data.logo ? (
+                            {data.visualDirection.logoUrl ? (
                                 <>
                                     <FileImage className="w-10 h-10 text-brand-purple" />
-                                    <p className="text-sm font-medium text-foreground">{data.logo}</p>
+                                    <p className="text-sm font-medium text-foreground">{data.visualDirection.logoUrl}</p>
                                     <p className="text-xs text-muted-foreground">Click to replace</p>
                                 </>
                             ) : (
@@ -70,8 +71,8 @@ export const StepContent = () => {
                     <Textarea
                         placeholder="We are a digital agency focused on..."
                         className="min-h-[150px]"
-                        value={data.bio}
-                        onChange={(e) => setData({ bio: e.target.value })}
+                        value={data.brandVoice.pubDescription}
+                        onChange={(e) => updateBrandVoice({ pubDescription: e.target.value })}
                     />
                     <p className="text-xs text-muted-foreground">
                         This will be used for the initial "About" section on your site.

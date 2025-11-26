@@ -13,6 +13,11 @@ export default function SupportPage() {
 
     const selectedTicket = tickets.find(t => t.id === selectedTicketId)
 
+    // Fetch tickets on mount
+    React.useEffect(() => {
+        useTicketStore.getState().fetchTickets()
+    }, [])
+
     // Auto-select first ticket if none selected and tickets exist
     React.useEffect(() => {
         if (!selectedTicketId && tickets.length > 0) {

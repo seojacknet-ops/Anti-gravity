@@ -1,13 +1,9 @@
 "use client"
 
 import React from "react"
-import { useOnboardingStore } from "@/lib/store/onboarding-store"
-import { StepVibe } from "@/components/features/onboarding/StepVibe"
-import { StepContent } from "@/components/features/onboarding/StepContent"
-import { StepGoal } from "@/components/features/onboarding/StepGoal"
+import { Wizard } from "@/components/features/onboarding/Wizard"
 
 export default function OnboardingPage() {
-    const { currentStep } = useOnboardingStore()
     const [mounted, setMounted] = React.useState(false)
 
     // Prevent hydration mismatch for persisted state
@@ -20,12 +16,57 @@ export default function OnboardingPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background flex flex-col">
-            <main className="flex-1 flex items-center justify-center p-6 md:p-12">
-                {currentStep === 1 && <StepVibe />}
-                {currentStep === 2 && <StepContent />}
-                {currentStep === 3 && <StepGoal />}
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/30 to-gray-50">
+            {/* Header */}
+            <header className="bg-white border-b border-gray-200">
+                <div className="max-w-7xl mx-auto px-6 py-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-brand-purple rounded-lg flex items-center justify-center">
+                                <span className="text-white font-bold text-xl">S</span>
+                            </div>
+                            <div>
+                                <h1 className="text-xl font-bold text-gray-900">SEOJack</h1>
+                                <p className="text-xs text-gray-500">Client Onboarding</p>
+                            </div>
+                        </div>
+                        <button className="text-sm text-gray-600 hover:text-gray-900">
+                            Save & Continue Later
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            {/* Main Content */}
+            <main className="flex-1 py-12 px-6">
+                <div className="max-w-7xl mx-auto">
+                    {/* Welcome Message */}
+                    <div className="text-center mb-8">
+                        <h2 className="text-4xl font-bold text-gray-900 mb-3">
+                            Welcome to SEOJack! 🎉
+                        </h2>
+                        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                            Let's build you a website that actually brings in customers. This takes about 5 minutes,
+                            and you can save & continue anytime.
+                        </p>
+                    </div>
+
+                    {/* Wizard */}
+                    <Wizard />
+                </div>
             </main>
+
+            {/* Footer */}
+            <footer className="bg-white border-t border-gray-200 py-6">
+                <div className="max-w-7xl mx-auto px-6 text-center">
+                    <p className="text-sm text-gray-500">
+                        Need help? Contact us at{" "}
+                        <a href="mailto:support@seojack.com" className="text-brand-purple hover:underline">
+                            support@seojack.com
+                        </a>
+                    </p>
+                </div>
+            </footer>
         </div>
     )
 }

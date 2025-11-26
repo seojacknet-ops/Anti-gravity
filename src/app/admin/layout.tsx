@@ -1,0 +1,81 @@
+import Link from "next/link"
+import {
+    LayoutDashboard,
+    Users,
+    Briefcase,
+    Inbox,
+    Ticket,
+    CreditCard,
+    FileText,
+    Globe,
+    Users2,
+    Settings,
+    BarChart3
+} from "lucide-react"
+
+const navigation = [
+    { name: 'Command Center', href: '/admin', icon: LayoutDashboard },
+    { name: 'Clients', href: '/admin/clients', icon: Users },
+    { name: 'Projects', href: '/admin/projects', icon: Briefcase },
+    { name: 'Inbox', href: '/admin/inbox', icon: Inbox },
+    { name: 'Tickets', href: '/admin/tickets', icon: Ticket },
+    { name: 'Billing', href: '/admin/billing', icon: CreditCard },
+    { name: 'Content', href: '/admin/content', icon: FileText },
+    { name: 'Domains', href: '/admin/domains', icon: Globe },
+    { name: 'Team', href: '/admin/team', icon: Users2 },
+    { name: 'Settings', href: '/admin/settings', icon: Settings },
+    { name: 'Reports', href: '/admin/reports', icon: BarChart3 },
+]
+
+export default function AdminLayout({
+    children,
+}: {
+    children: React.ReactNode
+}) {
+    return (
+        <div className="flex h-screen bg-gray-50/50 dark:bg-gray-950 overflow-hidden">
+            {/* Sidebar */}
+            <aside className="w-72 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 hidden md:flex flex-col flex-shrink-0 z-40 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]">
+                <div className="p-8 pb-6">
+                    <h1 className="text-lg font-bold text-gray-900 dark:text-white tracking-wide flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
+                        SEOJACK <span className="text-gray-400 font-normal">OPS</span>
+                    </h1>
+                </div>
+                <nav className="flex-1 overflow-y-auto py-4 px-4 custom-scrollbar">
+                    <ul className="space-y-1">
+                        {navigation.map((item) => (
+                            <li key={item.name}>
+                                <Link
+                                    href={item.href}
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-all duration-200 group"
+                                >
+                                    <item.icon className="h-4 w-4 text-gray-400 dark:text-gray-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" />
+                                    {item.name}
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </nav>
+                <div className="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 pb-20">
+                    <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-sm ring-2 ring-white dark:ring-gray-800">
+                            JS
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">Hello, Jack</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Admin</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            {/* Main Content */}
+            <main className="flex-1 h-full overflow-y-auto bg-gray-50/50 dark:bg-gray-950 relative">
+                <div className="max-w-7xl mx-auto w-full">
+                    {children}
+                </div>
+            </main>
+        </div>
+    )
+}
