@@ -50,67 +50,95 @@ export interface StorageService {
 /**
  * Mock implementation for development
  */
-export class MockStorageService implements StorageService {
-    private files: Map<string, StorageFile> = new Map()
+/**
+ * Firebase Storage implementation for production
+ */
+import {
+    ref,
+    uploadBytes,
+    getDownloadURL,
+    deleteObject,
+    listAll,
+    getMetadata
+} from 'firebase/storage';
+import { storage } from '@/lib/firebase/client';
+
+export class FirebaseStorageService implements StorageService {
 
     async upload(file: File, options?: UploadOptions): Promise<StorageFile> {
         // Validate file size
         if (options?.maxSize && file.size > options.maxSize) {
-            throw new Error(`File size exceeds ${options.maxSize} bytes`)
+            throw new Error(`File size exceeds ${options.maxSize} bytes`);
         }
 
         // Validate file type
         if (options?.allowedTypes && !options.allowedTypes.includes(file.type)) {
-            throw new Error(`File type ${file.type} not allowed`)
+            throw new Error(`File type ${file.type} not allowed`);
         }
 
-        // Simulate upload delay
-        await new Promise(resolve => setTimeout(resolve, 1500))
+        const folder = options?.folder || 'uploads';
+        const fileName = `${Date.now()}_${file.name}`;
+        const storageRef = ref(storage, `${folder}/${fileName}`);
 
-        const storageFile: StorageFile = {
-            id: Math.random().toString(36).substr(2, 9),
+        const snapshot = await uploadBytes(storageRef, file);
+        const url = await getDownloadURL(snapshot.ref);
+
+        return {
+            id: snapshot.ref.fullPath,
             name: file.name,
-            url: URL.createObjectURL(file),
+            url: url,
             size: file.size,
             type: file.type,
             uploadedAt: new Date()
-        }
-
-        this.files.set(storageFile.id, storageFile)
-        return storageFile
+        };
     }
 
     async delete(fileId: string): Promise<void> {
-        await new Promise(resolve => setTimeout(resolve, 500))
-
-        if (!this.files.has(fileId)) {
-            throw new Error('File not found')
-        }
-
-        this.files.delete(fileId)
+        const storageRef = ref(storage, fileId);
+        await deleteObject(storageRef);
     }
 
     async list(folder?: string): Promise<StorageFile[]> {
-        await new Promise(resolve => setTimeout(resolve, 300))
-        return Array.from(this.files.values())
+        const listRef = ref(storage, folder || 'uploads');
+        const res = await listAll(listRef);
+
+        const files = await Promise.all(res.items.map(async (itemRef) => {
+            const url = await getDownloadURL(itemRef);
+            const metadata = await getMetadata(itemRef);
+
+            return {
+                id: itemRef.fullPath,
+                name: itemRef.name,
+                url: url,
+                size: metadata.size,
+                type: metadata.contentType || 'unknown',
+                uploadedAt: new Date(metadata.timeCreated)
+            };
+        }));
+
+        return files;
     }
 
     async getDownloadUrl(fileId: string): Promise<string> {
-        const file = this.files.get(fileId)
-        if (!file) {
-            throw new Error('File not found')
-        }
-        return file.url
+        const storageRef = ref(storage, fileId);
+        return await getDownloadURL(storageRef);
     }
 
     async getMetadata(fileId: string): Promise<StorageFile> {
-        const file = this.files.get(fileId)
-        if (!file) {
-            throw new Error('File not found')
-        }
-        return file
+        const storageRef = ref(storage, fileId);
+        const metadata = await getMetadata(storageRef);
+        const url = await getDownloadURL(storageRef);
+
+        return {
+            id: storageRef.fullPath,
+            name: metadata.name,
+            url: url,
+            size: metadata.size,
+            type: metadata.contentType || 'unknown',
+            uploadedAt: new Date(metadata.timeCreated)
+        };
     }
 }
 
 // Export singleton instance
-export const storageService = new MockStorageService()
+export const storageService = new FirebaseStorageService();

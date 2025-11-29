@@ -7,6 +7,7 @@ export interface UserDocument {
     phone?: string;
     company?: string;
     avatarUrl?: string;
+    role: 'client' | 'admin';
 
     // Subscription
     plan: 'starter' | 'growth' | 'pro';
@@ -104,7 +105,8 @@ export interface MessageDocument {
     }[];
 
     readBy: string[];  // User IDs who have read
-    createdAt: Timestamp;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface TicketDocument {
@@ -123,4 +125,15 @@ export interface TicketDocument {
     createdAt: Timestamp;
     updatedAt: Timestamp;
     resolvedAt?: Timestamp;
+}
+
+export interface NotificationDocument {
+    id: string;
+    userId: string;
+    type: 'message' | 'system' | 'billing' | 'project';
+    title: string;
+    message: string;
+    link?: string;
+    read: boolean;
+    createdAt: Timestamp;
 }

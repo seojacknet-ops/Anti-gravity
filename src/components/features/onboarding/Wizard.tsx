@@ -2,6 +2,8 @@
 
 import React from 'react'
 import { useOnboardingStore } from '@/lib/store/onboarding-store'
+import { authService } from '@/services/auth'
+import { databaseService } from '@/services/database'
 import { Step1BusinessInfo } from './steps/Step1BusinessInfo'
 import { Step2BrandVoice } from './steps/Step2BrandVoice'
 import { Step3TargetCustomer } from './steps/Step3TargetCustomer'
@@ -47,17 +49,39 @@ export const Wizard = () => {
 
     const progress = (currentStep / totalSteps) * 100
 
-    const handleContinue = () => {
+    const handleContinue = async () => {
         if (currentStep < totalSteps) {
             nextStep()
             // Smooth scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' })
         } else {
             // Final step - complete onboarding
-            toast.success('🎉 Onboarding Complete! Redirecting to your dashboard...')
-            setTimeout(() => {
-                router.push('/dashboard')
-            }, 1500)
+            try {
+                const user = await authService.getCurrentUser();
+                if (user) {
+                    await databaseService.update('users', user.id, {
+                        onboardingCompleted: true,
+                        quizData: data,
+                        updatedAt: new Date()
+                    });
+
+                    // Save detailed onboarding data to 'onboarding' collection
+                    await databaseService.set('onboarding', user.id, {
+                        userId: user.id,
+                        ...data,
+                        completedAt: new Date()
+                    });
+                    toast.success('🎉 Onboarding Complete! Redirecting to your dashboard...')
+                    setTimeout(() => {
+                        router.push('/')
+                    }, 1500)
+                } else {
+                    toast.error('Error: No user logged in. Please log in and try again.');
+                }
+            } catch (error) {
+                console.error('Error saving onboarding data:', error);
+                toast.error('Failed to save your progress. Please try again.');
+            }
         }
     }
 
@@ -71,7 +95,7 @@ export const Wizard = () => {
                     data.businessInfo.location.trim() !== ''
                 )
             case 2:
-                return data.brandVoice.pubDescription.trim() !== '' && data.brandVoice.services.length > 0
+                return true // No required fields - features are optional
             case 3:
                 return data.targetCustomer.customerType.length > 0
             case 4:

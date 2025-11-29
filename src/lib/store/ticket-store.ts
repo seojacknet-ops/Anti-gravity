@@ -1,5 +1,7 @@
 import { create } from 'zustand'
-
+import { supportService } from '@/services/support.service'
+import { authService } from '@/services/auth'
+import { TicketDocument } from '@/lib/schemas/firebase'
 
 export type TicketStatus = 'open' | 'in_progress' | 'awaiting_info' | 'completed'
 export type TicketPriority = 'low' | 'medium' | 'high' | 'critical'
@@ -7,29 +9,23 @@ export type TicketPriority = 'low' | 'medium' | 'high' | 'critical'
 export interface Comment {
     id: string
     ticketId: string
-    message: string
-    isStaffReply: boolean
-    createdAt: string
-    authorName: string
+    text: string
+    isStaff: boolean
+    createdAt: any
+    userId: string
 }
 
-export interface Ticket {
-    id: string
-    title: string
-    description: string
-    status: TicketStatus
-    priority: TicketPriority
-    createdAt: string
-    updatedAt: string
-}
+export type Ticket = TicketDocument
 
 interface TicketState {
     tickets: Ticket[]
-    comments: Record<string, Comment[]> // Map ticketId to comments
-
-    createTicket: (title: string, description: string, priority: TicketPriority) => Promise<void>
-    fetchTickets: () => Promise<void>
+    comments: Record<string, Comment[]>
     isLoading: boolean
+
+    fetchTickets: () => Promise<void>
+    createTicket: (title: string, description: string, priority: TicketPriority, type: 'bug' | 'tweak' | 'feature') => Promise<void>
+    fetchComments: (ticketId: string) => void
+    addComment: (ticketId: string, text: string) => Promise<void>
 }
 
 export const useTicketStore = create<TicketState>()((set, get) => ({
@@ -40,85 +36,54 @@ export const useTicketStore = create<TicketState>()((set, get) => ({
     fetchTickets: async () => {
         set({ isLoading: true })
         try {
-            const { firestoreService } = await import('@/lib/firebase/firestore')
-            const { authService } = await import('@/lib/firebase/auth')
+            const user = await authService.getCurrentUser()
+            if (!user) return
 
-            const user = authService.getCurrentUser()
-            const userId = user?.uid || 'test-user-123'
-
-            // In real app we'd query by userId or projectId
-            // For now, let's fetch all tickets for this user
-            // We need to import 'where' from firebase/firestore to use it in queryDocuments
-            // But queryDocuments wrapper takes QueryConstraints.
-
-            // Let's assume we fetch all for now or implement a simple filter if possible
-            // Since we can't easily import 'where' here without making it messy, 
-            // let's just fetch all from 'tickets' collection and filter in memory for the mock
-            // OR better: use the firestoreService.queryDocuments if we can pass constraints.
-
-            // Simplified: Just get all tickets for now.
-            const tickets = await firestoreService.queryDocuments<Ticket>('tickets', [])
-
-            // Filter by userId manually for now since we didn't export 'where' helper
-            const userTickets = tickets.filter((t: any) => t.userId === userId)
-
-            set({ tickets: userTickets })
-
+            // Subscribe to tickets
+            supportService.subscribeToTickets(user.id, (tickets) => {
+                set({ tickets, isLoading: false })
+            })
         } catch (error) {
             console.error('Failed to fetch tickets:', error)
+            set({ isLoading: false })
+        }
+    },
+
+    createTicket: async (title, description, priority, type) => {
+        set({ isLoading: true })
+        try {
+            const user = await authService.getCurrentUser()
+            if (!user) throw new Error('User not authenticated')
+
+            await supportService.createTicket(user.id, user.id, {
+                title,
+                description,
+                priority,
+                type
+            })
+            // Subscription will update the list
+        } catch (error) {
+            console.error('Failed to create ticket:', error)
         } finally {
             set({ isLoading: false })
         }
     },
 
-    createTicket: async (title, description, priority) => {
-        set({ isLoading: true })
-        try {
-            const { firestoreService } = await import('@/lib/firebase/firestore')
-            const { authService } = await import('@/lib/firebase/auth')
-
-            const user = authService.getCurrentUser()
-            const userId = user?.uid || 'test-user-123'
-
-            const newTicketData = {
-                title,
-                description,
-                priority,
-                status: 'open',
-                userId,
-                projectId: 'test-project-123', // Mock
-                createdAt: new Date(),
-                updatedAt: new Date()
-            }
-
-            const id = await firestoreService.createDocument('tickets', newTicketData)
-
-            const newTicket: Ticket = {
-                id,
-                ...newTicketData,
-                createdAt: newTicketData.createdAt.toISOString(),
-                updatedAt: newTicketData.updatedAt.toISOString(),
-            } as any
-
+    fetchComments: (ticketId: string) => {
+        supportService.subscribeToComments(ticketId, (comments) => {
             set((state) => ({
-                tickets: [newTicket, ...state.tickets],
-                isLoading: false
+                comments: {
+                    ...state.comments,
+                    [ticketId]: comments
+                }
             }))
-
-        } catch (error) {
-            console.error('Failed to create ticket:', error)
-            set({ isLoading: false })
-        }
+        })
     },
 
-    addComment: (ticketId: string, message: string, isStaffReply = false) => {
-        // ... (Keep local for now or migrate comments to subcollection later)
-        // For this migration step, we focused on Tickets. Comments can be next.
-        console.log('Add comment not fully migrated yet')
-    },
+    addComment: async (ticketId: string, text: string) => {
+        const user = await authService.getCurrentUser()
+        if (!user) return
 
-    updateStatus: (ticketId: string, status: TicketStatus) => {
-        // ... (Keep local or migrate)
-        console.log('Update status not fully migrated yet')
-    },
+        await supportService.addComment(ticketId, user.id, text, false)
+    }
 }))

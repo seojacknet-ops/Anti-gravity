@@ -101,8 +101,8 @@ export const Step4VisualDirection = () => {
                                 })
                             }
                             className={`w-full p-4 border-2 rounded-lg text-left transition-all ${visualDirection.vibe === option.id
-                                    ? 'border-brand-purple bg-brand-purple/10 ring-2 ring-brand-purple/30'
-                                    : 'border-gray-200 hover:border-brand-purple/50'
+                                ? 'border-brand-purple bg-brand-purple/10 ring-2 ring-brand-purple/30'
+                                : 'border-gray-200 hover:border-brand-purple/50'
                                 }`}
                         >
                             <div className="flex items-start gap-4">
@@ -110,6 +110,70 @@ export const Step4VisualDirection = () => {
                                 <div>
                                     <div className="font-semibold text-gray-900">{option.name}</div>
                                     <div className="text-sm text-gray-600">{option.description}</div>
+                                </div>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+
+            {/* Typography */}
+            <div>
+                <label className="block text-sm font-medium text-gray-900 mb-3">Typography</label>
+                <p className="text-sm text-gray-600 mb-4">
+                    Which font style do you prefer?
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                    {[
+                        {
+                            id: 'modern-sans',
+                            label: 'Modern Sans',
+                            desc: 'Clean & Minimal',
+                            preview: 'Aa',
+                            fontClass: 'font-sans',
+                        },
+                        {
+                            id: 'classic-serif',
+                            label: 'Classic Serif',
+                            desc: 'Trustworthy & Traditional',
+                            preview: 'Aa',
+                            fontClass: 'font-serif',
+                        },
+                        {
+                            id: 'bold-display',
+                            label: 'Bold Display',
+                            desc: 'Loud & Confident',
+                            preview: 'Aa',
+                            fontClass: 'font-black',
+                        },
+                        {
+                            id: 'handwritten',
+                            label: 'Handwritten',
+                            desc: 'Personal & Creative',
+                            preview: 'Aa',
+                            fontClass: 'italic',
+                        },
+                    ].map((font) => (
+                        <button
+                            key={font.id}
+                            onClick={() =>
+                                updateVisualDirection({
+                                    fontPreference: font.id as any,
+                                })
+                            }
+                            className={`p-4 border-2 rounded-lg text-left transition-all ${visualDirection.fontPreference === font.id
+                                ? 'border-brand-purple bg-brand-purple/10 ring-2 ring-brand-purple/30'
+                                : 'border-gray-200 hover:border-brand-purple/50'
+                                }`}
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className={`text-3xl ${font.fontClass} text-gray-900`}>
+                                    {font.preview}
+                                </div>
+                                <div>
+                                    <div className="font-semibold text-gray-900">{font.label}</div>
+                                    <div className="text-sm text-gray-600">{font.desc}</div>
                                 </div>
                             </div>
                         </button>
@@ -141,8 +205,8 @@ export const Step4VisualDirection = () => {
                                 })
                             }
                             className={`p-4 border-2 rounded-lg transition-all ${visualDirection.colorPalette === key
-                                    ? 'border-brand-purple ring-2 ring-brand-purple/30'
-                                    : 'border-gray-200 hover:border-brand-purple/50'
+                                ? 'border-brand-purple ring-2 ring-brand-purple/30'
+                                : 'border-gray-200 hover:border-brand-purple/50'
                                 }`}
                         >
                             <div className="text-3xl mb-2">{palette.emoji}</div>
@@ -235,15 +299,15 @@ export const Step4VisualDirection = () => {
                                 })
                             }
                             className={`w-full p-4 border-2 rounded-lg text-left transition-all ${visualDirection[asset.key as keyof typeof visualDirection]
-                                    ? 'border-brand-purple bg-brand-purple/10'
-                                    : 'border-gray-200 hover:border-brand-purple/50'
+                                ? 'border-brand-purple bg-brand-purple/10'
+                                : 'border-gray-200 hover:border-brand-purple/50'
                                 }`}
                         >
                             <div className="flex items-center gap-3">
                                 <div
                                     className={`w-6 h-6 rounded border-2 flex items-center justify-center ${visualDirection[asset.key as keyof typeof visualDirection]
-                                            ? 'bg-brand-purple border-brand-purple'
-                                            : 'border-gray-300'
+                                        ? 'bg-brand-purple border-brand-purple'
+                                        : 'border-gray-300'
                                         }`}
                                 >
                                     {visualDirection[asset.key as keyof typeof visualDirection] && (

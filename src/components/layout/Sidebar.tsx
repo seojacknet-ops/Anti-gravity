@@ -3,13 +3,15 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Globe, MessageSquare, HardDrive, CreditCard, Settings, LogOut } from 'lucide-react';
+import { Home, Globe, MessageSquare, HardDrive, CreditCard, Settings, LogOut, BarChart2, LifeBuoy } from 'lucide-react';
 
 export const navItems = [
     { label: 'Home', href: '/', icon: Home },
     { label: 'My Website', href: '/website', icon: Globe },
     { label: 'Messages', href: '/messages', icon: MessageSquare },
-    { label: 'Media Vault', href: '/vault', icon: HardDrive },
+    { label: 'Media Vault', href: '/media', icon: HardDrive },
+    { label: 'Analytics', href: '/analytics', icon: BarChart2 },
+    { label: 'Support', href: '/support', icon: LifeBuoy },
     { label: 'Billing', href: '/billing', icon: CreditCard },
 ];
 

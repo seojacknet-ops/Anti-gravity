@@ -49,8 +49,8 @@ export const Step5Essentials = () => {
                             className={`p-4 border-2 rounded-lg text-left transition-all ${essentials.contactMethods.includes(
                                 method.id as 'phone' | 'email' | 'whatsapp' | 'contact-form' | 'messenger'
                             )
-                                    ? 'border-brand-purple bg-brand-purple/10'
-                                    : 'border-gray-200 hover:border-brand-purple/50'
+                                ? 'border-brand-purple bg-brand-purple/10'
+                                : 'border-gray-200 hover:border-brand-purple/50'
                                 }`}
                         >
                             <div className="flex items-center gap-3">
@@ -88,62 +88,6 @@ export const Step5Essentials = () => {
                 </div>
             </div>
 
-            {/* Business Hours */}
-            <div>
-                <label className="block text-sm font-medium text-gray-900 mb-3">When are you available?</label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-                    {[
-                        { label: 'Mon-Fri 9-5', value: 'Mon-Fri 9-5' },
-                        { label: 'Mon-Sat 8-6', value: 'Mon-Sat 8-6' },
-                        { label: '24/7 Emergency', value: '24/7 Emergency' },
-                        { label: 'Custom', value: 'custom' },
-                    ].map((preset) => (
-                        <button
-                            key={preset.value}
-                            onClick={() =>
-                                updateEssentials({
-                                    businessHours: preset.value === 'custom' ? '' : preset.value,
-                                })
-                            }
-                            className={`p-3 border-2 rounded-lg transition-all ${essentials.businessHours === preset.value ||
-                                    (preset.value === 'custom' &&
-                                        essentials.businessHours &&
-                                        !['Mon-Fri 9-5', 'Mon-Sat 8-6', '24/7 Emergency'].includes(
-                                            essentials.businessHours
-                                        ))
-                                    ? 'border-brand-purple bg-brand-purple/10'
-                                    : 'border-gray-200 hover:border-brand-purple/50'
-                                }`}
-                        >
-                            <div className="font-medium text-gray-900 text-sm">{preset.label}</div>
-                        </button>
-                    ))}
-                </div>
-                {essentials.businessHours &&
-                    !['Mon-Fri 9-5', 'Mon-Sat 8-6', '24/7 Emergency'].includes(essentials.businessHours) && (
-                        <input
-                            type="text"
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20"
-                            placeholder="Enter your custom hours..."
-                            value={essentials.businessHours}
-                            onChange={(e) => updateEssentials({ businessHours: e.target.value })}
-                        />
-                    )}
-                <div className="mt-3">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={essentials.showHours}
-                            onChange={(e) => updateEssentials({ showHours: e.target.checked })}
-                            className="w-4 h-4 text-brand-purple border-gray-300 rounded focus:ring-brand-purple"
-                        />
-                        <span className="text-sm text-gray-700">Show hours on website</span>
-                    </label>
-                    <p className="text-xs text-gray-500 mt-1 ml-6">
-                        Some tradespeople prefer flexibility
-                    </p>
-                </div>
-            </div>
 
             {/* Social Media */}
             <div>
@@ -192,8 +136,8 @@ export const Step5Essentials = () => {
                     <button
                         onClick={() => updateEssentials({ hasExistingWebsite: true })}
                         className={`flex-1 p-3 border-2 rounded-lg transition-all ${essentials.hasExistingWebsite
-                                ? 'border-brand-purple bg-brand-purple/10'
-                                : 'border-gray-200 hover:border-brand-purple/50'
+                            ? 'border-brand-purple bg-brand-purple/10'
+                            : 'border-gray-200 hover:border-brand-purple/50'
                             }`}
                     >
                         Yes
@@ -203,8 +147,8 @@ export const Step5Essentials = () => {
                             updateEssentials({ hasExistingWebsite: false, existingWebsiteUrl: undefined })
                         }
                         className={`flex-1 p-3 border-2 rounded-lg transition-all ${!essentials.hasExistingWebsite
-                                ? 'border-brand-purple bg-brand-purple/10'
-                                : 'border-gray-200 hover:border-brand-purple/50'
+                            ? 'border-brand-purple bg-brand-purple/10'
+                            : 'border-gray-200 hover:border-brand-purple/50'
                             }`}
                     >
                         No
@@ -243,8 +187,8 @@ export const Step5Essentials = () => {
                                 }
                             }}
                             className={`p-3 border-2 rounded-lg transition-all ${essentials.reviewSources.includes(source)
-                                    ? 'border-brand-purple bg-brand-purple/10'
-                                    : 'border-gray-200 hover:border-brand-purple/50'
+                                ? 'border-brand-purple bg-brand-purple/10'
+                                : 'border-gray-200 hover:border-brand-purple/50'
                                 }`}
                         >
                             <div className="font-medium text-gray-900 text-sm">{source}</div>

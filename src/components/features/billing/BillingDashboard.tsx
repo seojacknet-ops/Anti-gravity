@@ -9,7 +9,11 @@ import { CreditCard, Calendar, AlertCircle } from "lucide-react"
 import { PlanBadge } from "./PlanBadge"
 
 export const BillingDashboard = () => {
-    const { currentPlan, status, nextBillingDate, paymentMethod, cancelPlan } = useBillingStore()
+    const { currentPlan, status, nextBillingDate, paymentMethod, cancelPlan, fetchSubscription } = useBillingStore()
+
+    React.useEffect(() => {
+        fetchSubscription()
+    }, [fetchSubscription])
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {

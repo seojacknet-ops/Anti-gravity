@@ -8,16 +8,21 @@ import { Textarea } from "@/components/ui/textarea"
 import { StatusBadge } from "./StatusBadge"
 import { Send, User, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { formatDistanceToNow } from "date-fns"
 
 interface TicketDetailProps {
     ticket: Ticket
 }
 
 export const TicketDetail = ({ ticket }: TicketDetailProps) => {
-    const { comments, addComment } = useTicketStore()
+    const { comments, addComment, fetchComments } = useTicketStore()
     const [message, setMessage] = React.useState("")
     const ticketComments = comments[ticket.id] || []
     const scrollRef = React.useRef<HTMLDivElement>(null)
+
+    React.useEffect(() => {
+        fetchComments(ticket.id)
+    }, [ticket.id, fetchComments])
 
     React.useEffect(() => {
         if (scrollRef.current) {
@@ -29,6 +34,14 @@ export const TicketDetail = ({ ticket }: TicketDetailProps) => {
         if (!message.trim()) return
         addComment(ticket.id, message)
         setMessage("")
+    }
+
+    const formatDate = (date: any) => {
+        if (!date) return 'Just now';
+        // Handle Firestore Timestamp
+        if (date.toDate) return formatDistanceToNow(date.toDate(), { addSuffix: true });
+        // Handle Date object or string
+        return formatDistanceToNow(new Date(date), { addSuffix: true });
     }
 
     return (
@@ -57,7 +70,7 @@ export const TicketDetail = ({ ticket }: TicketDetailProps) => {
                         <div className="space-y-1 max-w-[80%]">
                             <div className="flex items-baseline gap-2">
                                 <span className="text-sm font-semibold">You</span>
-                                <span className="text-xs text-muted-foreground">{new Date(ticket.createdAt).toLocaleTimeString()}</span>
+                                <span className="text-xs text-muted-foreground">{formatDate(ticket.createdAt)}</span>
                             </div>
                             <div className="bg-secondary p-3 rounded-lg rounded-tl-none text-sm">
                                 {ticket.description}
@@ -67,24 +80,24 @@ export const TicketDetail = ({ ticket }: TicketDetailProps) => {
 
                     {/* Comments */}
                     {ticketComments.map((comment) => (
-                        <div key={comment.id} className={cn("flex gap-3", comment.isStaffReply ? "flex-row-reverse" : "")}>
+                        <div key={comment.id} className={cn("flex gap-3", comment.isStaff ? "flex-row-reverse" : "")}>
                             <div className={cn(
                                 "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                                comment.isStaffReply ? "bg-brand-purple text-white" : "bg-secondary"
+                                comment.isStaff ? "bg-brand-purple text-white" : "bg-secondary"
                             )}>
-                                {comment.isStaffReply ? <ShieldCheck className="w-4 h-4" /> : <User className="w-4 h-4 text-muted-foreground" />}
+                                {comment.isStaff ? <ShieldCheck className="w-4 h-4" /> : <User className="w-4 h-4 text-muted-foreground" />}
                             </div>
 
-                            <div className={cn("space-y-1 max-w-[80%]", comment.isStaffReply ? "items-end flex flex-col" : "")}>
+                            <div className={cn("space-y-1 max-w-[80%]", comment.isStaff ? "items-end flex flex-col" : "")}>
                                 <div className="flex items-baseline gap-2">
-                                    <span className="text-sm font-semibold">{comment.authorName}</span>
-                                    <span className="text-xs text-muted-foreground">{new Date(comment.createdAt).toLocaleTimeString()}</span>
+                                    <span className="text-sm font-semibold">{comment.isStaff ? 'Support Team' : 'You'}</span>
+                                    <span className="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
                                 </div>
                                 <div className={cn(
                                     "p-3 rounded-lg text-sm",
-                                    comment.isStaffReply ? "bg-brand-purple text-white rounded-tr-none" : "bg-secondary rounded-tl-none"
+                                    comment.isStaff ? "bg-brand-purple text-white rounded-tr-none" : "bg-secondary rounded-tl-none"
                                 )}>
-                                    {comment.message}
+                                    {comment.text}
                                 </div>
                             </div>
                         </div>

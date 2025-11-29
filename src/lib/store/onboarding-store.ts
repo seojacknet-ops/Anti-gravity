@@ -17,6 +17,8 @@ export interface BrandVoice {
     services: string[] // Selected services
     customServices: string[]
     secretSauce: string[] // Top 3 customer feedback points
+    usps: string[] // Unique Selling Points
+    toneOfVoice: string // e.g. Friendly, Corporate, etc.
     certifications: string[] // Trust signals
     jobsCompleted: '50+' | '100+' | '500+' | '1000+' | 'lost-count' | null
 }
@@ -34,6 +36,7 @@ export interface TargetCustomer {
 export interface VisualDirection {
     inspirationUrls: string[]
     vibe: 'clean-professional' | 'friendly-approachable' | 'bold-confident' | 'traditional-trustworthy' | 'modern-sleek' | null
+    fontPreference: 'modern-sans' | 'classic-serif' | 'bold-display' | 'handwritten' | null
     colorPalette: 'ocean' | 'forest' | 'sunset' | 'slate' | 'midnight' | 'custom' | null
     customColors: string[]
     hasLogo: boolean
@@ -99,10 +102,6 @@ interface OnboardingState {
     nextStep: () => void
     prevStep: () => void
     reset: () => void
-
-    // Firebase Actions
-    isSaving: boolean
-    saveProject: () => Promise<string | null>
 }
 
 const initialData: OnboardingData = {
@@ -118,6 +117,8 @@ const initialData: OnboardingData = {
         services: [],
         customServices: [],
         secretSauce: [],
+        usps: [],
+        toneOfVoice: '',
         certifications: [],
         jobsCompleted: null,
     },
@@ -131,6 +132,7 @@ const initialData: OnboardingData = {
     visualDirection: {
         inspirationUrls: [],
         vibe: null,
+        fontPreference: null,
         colorPalette: null,
         customColors: [],
         hasLogo: false,
@@ -215,69 +217,6 @@ export const useOnboardingStore = create<OnboardingState>()(
             nextStep: () => set((state) => ({ currentStep: state.currentStep + 1 })),
             prevStep: () => set((state) => ({ currentStep: Math.max(1, state.currentStep - 1) })),
             reset: () => set({ currentStep: 1, data: initialData }),
-
-            // Firebase Migration
-            isSaving: false,
-            saveProject: async () => {
-                const { data } = get()
-                set({ isSaving: true })
-
-                try {
-                    // Import services dynamically to avoid circular dependencies or initialization issues
-                    const { firestoreService } = await import('@/lib/firebase/firestore')
-                    const { authService } = await import('@/lib/firebase/auth')
-
-                    // Get current user or use placeholder
-                    const user = authService.getCurrentUser()
-                    const userId = user?.uid || 'test-user-123'
-
-                    // Construct Project Document
-                    const projectData = {
-                        userId,
-                        businessName: data.businessInfo.businessName,
-                        industry: data.businessInfo.industry || 'other',
-                        location: data.businessInfo.location,
-                        serviceArea: data.targetCustomer.specificAreas.join(', '),
-
-                        brief: {
-                            pubDescription: data.brandVoice.pubDescription,
-                            services: data.brandVoice.services,
-                            uniqueSellingPoints: data.brandVoice.secretSauce,
-                            certifications: data.brandVoice.certifications,
-                            targetCustomer: data.targetCustomer.customerType.join(', '),
-                            pricePositioning: data.targetCustomer.pricePositioning || 'mid-range',
-
-                            inspirationUrls: data.visualDirection.inspirationUrls,
-                            vibe: data.visualDirection.vibe || 'modern-sleek',
-                            colorPalette: data.visualDirection.colorPalette || 'blue',
-
-                            phone: data.essentials.phone,
-                            email: data.essentials.email,
-                            businessHours: data.essentials.businessHours,
-                            socialLinks: data.essentials.socialMedia,
-                        },
-
-                        status: 'onboarding',
-                        currentPhase: 1,
-
-                        logoUrl: data.visualDirection.logoUrl,
-                        photos: data.essentials.photos,
-
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                    }
-
-                    const projectId = await firestoreService.createDocument('projects', projectData)
-                    console.log('Project saved with ID:', projectId)
-
-                    set({ isSaving: false })
-                    return projectId
-                } catch (error) {
-                    console.error('Failed to save project:', error)
-                    set({ isSaving: false })
-                    return null
-                }
-            }
         }),
         {
             name: 'seojack-onboarding-storage',

@@ -6,7 +6,7 @@ import { Header } from "@/components/layout/Header";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 
 export const metadata: Metadata = {
   title: "SEOJack Client Hub",
@@ -16,6 +16,8 @@ export const metadata: Metadata = {
 import { Toaster } from "@/components/ui/sonner";
 
 import { AppShell } from "@/components/layout/AppShell";
+
+import { ImpersonationBanner } from "@/components/features/admin/ImpersonationBanner";
 
 export default function RootLayout({
   children,
@@ -31,6 +33,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <ImpersonationBanner />
           <AppShell>
             {children}
           </AppShell>

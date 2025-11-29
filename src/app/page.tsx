@@ -9,18 +9,118 @@ import RecentActivity from '@/components/features/dashboard/RecentActivity';
 import QuickActions from '@/components/features/dashboard/QuickActions';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import GetStartedTab from '@/components/features/dashboard/GetStartedTab';
+import { AuthView } from '@/components/features/auth/AuthView';
+import { DevToolbar, DevUserState } from '@/components/features/dev/DevToolbar';
+import { authService } from '@/services/auth';
+import { ProjectTimeline } from '@/components/features/dashboard/ProjectTimeline';
 
 export default function DashboardHome() {
-  // Mock State
-  const userName = "Alex";
-  const projectPhase = "Design Draft";
-  const planName = "10 Page Growth";
+  const [user, setUser] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [projectPhase, setProjectPhase] = React.useState("Onboarding");
+  const [currentStep, setCurrentStep] = React.useState(1);
+  const [devState, setDevState] = React.useState<DevUserState>('real');
+
+  // Fetch real user
+  const fetchUser = React.useCallback(async () => {
+    try {
+      const currentUser = await authService.getCurrentUser();
+      if (currentUser) {
+        setUser(currentUser);
+        // Determine phase based on onboarding status
+        const profile = await import('@/services/database').then(m => m.databaseService.read<any>('users', currentUser.id));
+        if (profile?.onboardingCompleted) {
+          setProjectPhase("Design Draft");
+          setCurrentStep(2);
+        } else {
+          setProjectPhase("Onboarding");
+          setCurrentStep(1);
+        }
+      } else {
+        setUser(null);
+      }
+    } catch (error) {
+      console.error("Failed to fetch user", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Handle Dev State Changes
+  React.useEffect(() => {
+    const applyDevState = async () => {
+      setLoading(true);
+      if (devState === 'real') {
+        await fetchUser();
+      } else {
+        // Simulate User
+        const mockUser = {
+          id: 'dev-user',
+          email: 'dev@example.com',
+          name: 'Dev User',
+          plan: 'starter'
+        };
+
+        if (devState === 'new_user') {
+          setUser({ ...mockUser, name: 'New User' });
+          setProjectPhase("Onboarding");
+          setCurrentStep(1);
+        } else if (devState === 'standard_plan') {
+          setUser({ ...mockUser, name: 'Standard User', plan: 'growth' });
+          setProjectPhase("Design Draft");
+          setCurrentStep(2);
+        } else if (devState === 'pro_plan') {
+          setUser({ ...mockUser, name: 'Pro User', plan: 'pro' });
+          setProjectPhase("Development");
+          setCurrentStep(3);
+        } else if (devState === 'admin') {
+          setUser({ ...mockUser, name: 'Admin User', role: 'admin' });
+          setProjectPhase("Live");
+          setCurrentStep(5);
+        }
+        setLoading(false);
+      }
+    };
+    applyDevState();
+  }, [devState, fetchUser]);
+
+  // Listen for auth changes (only in real mode)
+  React.useEffect(() => {
+    if (devState !== 'real') return;
+
+    const unsubscribe = authService.onAuthStateChanged(async (authUser) => {
+      if (authUser) {
+        await fetchUser();
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, [devState, fetchUser]);
+
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen text-brand-purple animate-pulse">Loading SEOJack...</div>;
+  }
+
+  // Render Auth View if no user
+  if (!user) {
+    return (
+      <>
+        <AuthView />
+        <DevToolbar onSimulate={setDevState} currentState={devState} />
+      </>
+    )
+  }
+
+  const userName = user?.name || "Guest";
+  const planName = user?.plan === 'pro' ? "Pro Plan" : user?.plan === 'growth' ? "Growth Plan" : "Starter Plan";
   const nextBillDate = "Dec 12, 2025";
-  const currentStep = 2;
   const totalSteps = 5;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20"> {/* Added padding for toolbar */}
       <Tabs defaultValue="get-started" className="w-full">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
@@ -90,41 +190,7 @@ export default function DashboardHome() {
               </div>
 
               {/* Project Progress Stepper - Full Width */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h2 className="text-lg font-bold text-gray-900 mb-6">Project Milestones</h2>
-                <div className="relative">
-                  {/* Progress Line */}
-                  <div className="absolute left-0 top-1/2 w-full h-1 bg-gray-100 -translate-y-1/2 hidden sm:block"></div>
-                  <div
-                    className="absolute left-0 top-1/2 h-1 bg-gradient-to-r from-green-500 to-brand-purple -translate-y-1/2 hidden sm:block transition-all duration-500"
-                    style={{ width: '25%' }}
-                  ></div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 relative z-10">
-                    {[
-                      { label: 'Onboarding', status: 'completed', desc: 'Complete' },
-                      { label: 'Design', status: 'current', desc: 'In Progress' },
-                      { label: 'Development', status: 'pending', desc: 'Upcoming' },
-                      { label: 'Live', status: 'pending', desc: 'Upcoming' },
-                    ].map((step, idx) => (
-                      <div key={step.label} className="flex flex-col items-center text-center bg-white sm:bg-transparent p-3 rounded-xl hover:bg-gray-50 transition-colors">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center border-4 transition-all ${step.status === 'completed'
-                          ? 'bg-green-500 border-green-100 text-white shadow-lg shadow-green-500/20' :
-                          step.status === 'current'
-                            ? 'bg-brand-purple border-brand-purple/20 text-white animate-pulse shadow-lg shadow-brand-purple/30' :
-                            'bg-white border-gray-200 text-gray-300'
-                          }`}>
-                          {step.status === 'completed' ? <CheckCircle className="w-6 h-6" /> : <span className="font-bold">{idx + 1}</span>}
-                        </div>
-                        <p className={`mt-3 text-sm font-bold ${step.status === 'current' ? 'text-brand-purple' :
-                          step.status === 'completed' ? 'text-green-600' : 'text-gray-500'
-                          }`}>{step.label}</p>
-                        <p className="text-xs text-gray-400 mt-1">{step.desc}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <ProjectTimeline currentStep={currentStep} totalSteps={totalSteps} />
 
               {/* Quick Actions */}
               <QuickActions />
@@ -232,6 +298,8 @@ export default function DashboardHome() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <DevToolbar onSimulate={setDevState} currentState={devState} />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { UploadCloud, MessageCircle, BarChart3, FileText, CreditCard, HelpCircle } from 'lucide-react';
+import { UploadCloud, MessageCircle, BarChart3, FileText, CreditCard, HelpCircle, Sparkles } from 'lucide-react';
 
 interface QuickAction {
     label: string;
@@ -13,6 +13,12 @@ interface QuickAction {
 
 export default function QuickActions() {
     const actions: QuickAction[] = [
+        {
+            label: 'AI Logo Generator',
+            href: '/logo-generator',
+            icon: <Sparkles className="w-5 h-5" />,
+            color: 'bg-gradient-to-br from-brand-purple to-brand-purple-dark hover:from-brand-purple-dark hover:to-brand-purple',
+        },
         {
             label: 'Upload Media',
             href: '/vault',

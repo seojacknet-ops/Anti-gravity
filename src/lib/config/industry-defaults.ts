@@ -129,12 +129,12 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryConfig> = {
 }
 
 export const INDUSTRIES = [
-    { id: 'plumber', label: 'Plumber', icon: '🔧' },
-    { id: 'electrician', label: 'Electrician', icon: '⚡' },
-    { id: 'cleaner', label: 'Cleaner', icon: '🧹' },
-    { id: 'builder', label: 'Builder', icon: '🏗️' },
-    { id: 'landscaper', label: 'Landscaper', icon: '🌳' },
-    { id: 'handyman', label: 'Handyman', icon: '🔨' },
+    { id: 'home-services', label: 'Home Services', icon: '🏠' },
+    { id: 'professional-services', label: 'Professional Services', icon: '💼' },
+    { id: 'creative-design', label: 'Creative & Design', icon: '🎨' },
+    { id: 'health-wellness', label: 'Health & Wellness', icon: '💚' },
+    { id: 'retail-ecommerce', label: 'Retail & E-commerce', icon: '🛍️' },
+    { id: 'food-hospitality', label: 'Food & Hospitality', icon: '🍽️' },
     { id: 'other', label: 'Something else...', icon: '🏢' },
 ]
 

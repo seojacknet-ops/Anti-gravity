@@ -44,7 +44,7 @@ export const NewTicketDialog = () => {
         if (data.type === "bug") priority = "high"
         if (data.type === "feature") priority = "low"
 
-        createTicket(data.title, data.description, priority)
+        createTicket(data.title, data.description, priority, data.type as any)
         reset()
         setOpen(false)
     }

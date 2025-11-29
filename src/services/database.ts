@@ -33,6 +33,15 @@ export interface DatabaseService {
     ): Promise<T>
 
     /**
+     * Create or overwrite a document with a specific ID
+     */
+    set<T extends DatabaseDocument>(
+        collection: string,
+        id: string,
+        data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>
+    ): Promise<T>
+
+    /**
      * Read a document by ID
      */
     read<T extends DatabaseDocument>(
@@ -75,133 +84,166 @@ export interface DatabaseService {
 /**
  * Mock implementation for development
  */
-export class MockDatabaseService implements DatabaseService {
-    private collections: Map<string, Map<string, DatabaseDocument>> = new Map()
+/**
+ * Firestore implementation for production
+ */
+import {
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    addDoc,
+    setDoc,
+    updateDoc,
+    deleteDoc,
+    query,
+    where,
+    orderBy,
+    limit,
+    onSnapshot,
+    Timestamp,
+    DocumentData
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase/client';
 
-    private getCollection(name: string): Map<string, DatabaseDocument> {
-        if (!this.collections.has(name)) {
-            this.collections.set(name, new Map())
+export class FirestoreDatabaseService implements DatabaseService {
+
+    private convertDate(date: Date | Timestamp): Date {
+        if (date instanceof Timestamp) {
+            return date.toDate();
         }
-        return this.collections.get(name)!
+        return date;
+    }
+
+    private mapDocument<T extends DatabaseDocument>(docSnap: DocumentData): T {
+        const data = docSnap.data();
+        return {
+            ...data,
+            id: docSnap.id,
+            createdAt: data.createdAt ? this.convertDate(data.createdAt) : new Date(),
+            updatedAt: data.updatedAt ? this.convertDate(data.updatedAt) : new Date(),
+        } as T;
     }
 
     async create<T extends DatabaseDocument>(
-        collection: string,
+        collectionName: string,
         data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>
     ): Promise<T> {
-        await new Promise(resolve => setTimeout(resolve, 300))
-
-        const doc: T = {
+        const now = new Date();
+        const docData = {
             ...data,
-            id: Math.random().toString(36).substr(2, 9),
-            createdAt: new Date(),
-            updatedAt: new Date()
-        } as T
+            createdAt: now,
+            updatedAt: now
+        };
 
-        this.getCollection(collection).set(doc.id, doc)
-        return doc
+        // If 'users' collection, we might want to use setDoc with a specific ID if provided in data (not typical for create but good for auth users)
+        // For generic create, we use addDoc
+        const docRef = await addDoc(collection(db, collectionName), docData);
+
+        return {
+            ...docData,
+            id: docRef.id
+        } as T;
+    }
+
+    // Overload for creating with a specific ID (useful for users)
+    async set<T extends DatabaseDocument>(
+        collectionName: string,
+        id: string,
+        data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>
+    ): Promise<T> {
+        const now = new Date();
+        const docData = {
+            ...data,
+            createdAt: now,
+            updatedAt: now
+        };
+
+        await setDoc(doc(db, collectionName, id), docData);
+
+        return {
+            ...docData,
+            id
+        } as T;
     }
 
     async read<T extends DatabaseDocument>(
-        collection: string,
+        collectionName: string,
         id: string
     ): Promise<T | null> {
-        await new Promise(resolve => setTimeout(resolve, 200))
-        return (this.getCollection(collection).get(id) as T) || null
+        const docRef = doc(db, collectionName, id);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            return this.mapDocument<T>(docSnap);
+        }
+        return null;
     }
 
     async update<T extends DatabaseDocument>(
-        collection: string,
+        collectionName: string,
         id: string,
         data: Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>
     ): Promise<T> {
-        await new Promise(resolve => setTimeout(resolve, 300))
-
-        const existing = this.getCollection(collection).get(id)
-        if (!existing) {
-            throw new Error('Document not found')
-        }
-
-        const updated: T = {
-            ...existing,
+        const docRef = doc(db, collectionName, id);
+        const updateData = {
             ...data,
             updatedAt: new Date()
-        } as T
+        };
 
-        this.getCollection(collection).set(id, updated)
-        return updated
+        await updateDoc(docRef, updateData);
+
+        // Fetch updated doc to return full object
+        const updatedSnap = await getDoc(docRef);
+        return this.mapDocument<T>(updatedSnap);
     }
 
-    async delete(collection: string, id: string): Promise<void> {
-        await new Promise(resolve => setTimeout(resolve, 200))
-
-        if (!this.getCollection(collection).has(id)) {
-            throw new Error('Document not found')
-        }
-
-        this.getCollection(collection).delete(id)
+    async delete(collectionName: string, id: string): Promise<void> {
+        await deleteDoc(doc(db, collectionName, id));
     }
 
     async query<T extends DatabaseDocument>(
-        collection: string,
+        collectionName: string,
         options?: QueryOptions
     ): Promise<T[]> {
-        await new Promise(resolve => setTimeout(resolve, 300))
+        const constraints = [];
 
-        let results = Array.from(this.getCollection(collection).values()) as T[]
-
-        // Apply where filters
         if (options?.where) {
-            results = results.filter(doc => {
-                return options.where!.every(condition => {
-                    const value = doc[condition.field]
-                    switch (condition.operator) {
-                        case '==': return value === condition.value
-                        case '!=': return value !== condition.value
-                        case '>': return value > condition.value
-                        case '<': return value < condition.value
-                        case '>=': return value >= condition.value
-                        case '<=': return value <= condition.value
-                        default: return true
-                    }
-                })
-            })
+            options.where.forEach(w => {
+                constraints.push(where(w.field, w.operator, w.value));
+            });
         }
 
-        // Apply ordering
         if (options?.orderBy) {
-            results.sort((a, b) => {
-                const aVal = a[options.orderBy!]
-                const bVal = b[options.orderBy!]
-                const direction = options.orderDirection === 'desc' ? -1 : 1
-                return aVal > bVal ? direction : -direction
-            })
+            constraints.push(orderBy(options.orderBy, options.orderDirection || 'asc'));
         }
 
-        // Apply limit
         if (options?.limit) {
-            results = results.slice(0, options.limit)
+            constraints.push(limit(options.limit));
         }
 
-        return results
+        const q = query(collection(db, collectionName), ...constraints);
+        const querySnapshot = await getDocs(q);
+
+        return querySnapshot.docs.map(doc => this.mapDocument<T>(doc));
     }
 
     subscribe<T extends DatabaseDocument>(
-        collection: string,
+        collectionName: string,
         id: string,
         callback: (doc: T | null) => void
     ): () => void {
-        // In a real implementation, this would set up a real-time listener
-        // For mock, we just call the callback once
-        const doc = this.getCollection(collection).get(id) as T || null
-        callback(doc)
+        const docRef = doc(db, collectionName, id);
 
-        // Return unsubscribe function
-        return () => {
-            console.log(`Unsubscribed from ${collection}/${id}`)
-        }
+        return onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                callback(this.mapDocument<T>(docSnap));
+            } else {
+                callback(null);
+            }
+        });
     }
 }
 
 // Export singleton instance
-export const databaseService = new MockDatabaseService()
+export const databaseService = new FirestoreDatabaseService();

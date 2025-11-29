@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-
+import { authService } from '@/services/auth'
+import { databaseService } from '@/services/database'
 
 export type PlanTier = 'starter' | 'growth' | 'pro'
 
@@ -58,19 +59,16 @@ export const useBillingStore = create<BillingState>()((set, get) => ({
     fetchSubscription: async () => {
         set({ isLoading: true })
         try {
-            const { firestoreService } = await import('@/lib/firebase/firestore')
-            const { authService } = await import('@/lib/firebase/auth')
+            const user = await authService.getCurrentUser()
+            if (!user) return
 
-            const user = authService.getCurrentUser()
-            const userId = user?.uid || 'test-user-123'
-
-            const userDoc = await firestoreService.getDocument('users', userId)
+            const userDoc = await databaseService.read<any>('users', user.id)
 
             if (userDoc && userDoc.plan) {
                 set({
                     currentPlan: userDoc.plan as PlanTier,
                     status: userDoc.subscriptionStatus as any || 'active',
-                    nextBillingDate: userDoc.subscriptionEndDate?.toDate().toISOString() || new Date().toISOString()
+                    nextBillingDate: userDoc.subscriptionEndDate ? new Date(userDoc.subscriptionEndDate).toISOString() : new Date().toISOString()
                 })
             }
         } catch (error) {
@@ -83,18 +81,15 @@ export const useBillingStore = create<BillingState>()((set, get) => ({
     upgradePlan: async (plan) => {
         set({ isLoading: true })
         try {
-            const { firestoreService } = await import('@/lib/firebase/firestore')
-            const { authService } = await import('@/lib/firebase/auth')
-
-            const user = authService.getCurrentUser()
-            const userId = user?.uid || 'test-user-123'
+            const user = await authService.getCurrentUser()
+            if (!user) return
 
             // Simulate Stripe Checkout process
             console.log(`Redirecting to Stripe for ${plan}...`)
             await new Promise(resolve => setTimeout(resolve, 1500))
 
             // Update Firestore directly for now (mocking webhook)
-            await firestoreService.updateDocument('users', userId, {
+            await databaseService.update('users', user.id, {
                 plan,
                 subscriptionStatus: 'active',
                 updatedAt: new Date()
@@ -111,16 +106,13 @@ export const useBillingStore = create<BillingState>()((set, get) => ({
     downgradePlan: async (plan) => {
         set({ isLoading: true })
         try {
-            const { firestoreService } = await import('@/lib/firebase/firestore')
-            const { authService } = await import('@/lib/firebase/auth')
-
-            const user = authService.getCurrentUser()
-            const userId = user?.uid || 'test-user-123'
+            const user = await authService.getCurrentUser()
+            if (!user) return
 
             console.log(`Downgrading to ${plan}...`)
             await new Promise(resolve => setTimeout(resolve, 1000))
 
-            await firestoreService.updateDocument('users', userId, {
+            await databaseService.update('users', user.id, {
                 plan,
                 updatedAt: new Date()
             })
@@ -136,13 +128,10 @@ export const useBillingStore = create<BillingState>()((set, get) => ({
     cancelPlan: async () => {
         set({ isLoading: true })
         try {
-            const { firestoreService } = await import('@/lib/firebase/firestore')
-            const { authService } = await import('@/lib/firebase/auth')
+            const user = await authService.getCurrentUser()
+            if (!user) return
 
-            const user = authService.getCurrentUser()
-            const userId = user?.uid || 'test-user-123'
-
-            await firestoreService.updateDocument('users', userId, {
+            await databaseService.update('users', user.id, {
                 subscriptionStatus: 'canceled',
                 updatedAt: new Date()
             })

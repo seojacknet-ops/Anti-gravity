@@ -1,6 +1,8 @@
 import { create } from 'zustand'
-
 import { toast } from 'sonner'
+import { authService } from '@/services/auth'
+import { databaseService } from '@/services/database'
+import { storageService } from '@/services/storage'
 
 export type FileType = 'image' | 'document' | 'other'
 
@@ -49,32 +51,32 @@ export const useMediaStore = create<MediaState>()((set, get) => ({
 
     fetchFiles: async () => {
         try {
-            const { firestoreService } = await import('@/lib/firebase/firestore')
-            const { authService } = await import('@/lib/firebase/auth')
+            const user = await authService.getCurrentUser()
+            if (!user) return
 
-            const user = authService.getCurrentUser()
-            const userId = user?.uid || 'test-user-123'
+            // Use real-time listener from databaseService
+            // Note: databaseService.subscribe expects a single doc, but we need a collection query.
+            // For now, let's just do a one-time fetch or implement subscribeQuery in databaseService.
+            // Given the interface, let's use query() for now.
+            // TODO: Add subscribeQuery to DatabaseService for real-time updates.
 
-            // For now, assume single project. In real app, we'd get projectId from context/url
-            // We'll query projects where userId matches
-            const projects = await firestoreService.queryDocuments('projects', [
-                // where('userId', '==', userId) // Need to import 'where' if we use it, but queryDocuments takes constraints
-            ])
+            const files = await databaseService.query<any>(`clients/${user.id}/media`, {
+                orderBy: 'createdAt',
+                orderDirection: 'desc'
+            })
 
-            // If no project found, we can't fetch files. 
-            // For migration test, we might need to ensure a project exists or just use a hardcoded ID if we created one.
-            // Let's just try to find the project we created in onboarding
+            const mappedFiles: MediaFile[] = files.map(data => ({
+                id: data.id,
+                name: data.name || 'Unnamed',
+                url: data.url || '#',
+                type: data.type || 'other',
+                size: data.size || '0 KB',
+                folderId: data.folderId || 'all',
+                createdAt: data.createdAt ? new Date(data.createdAt).toISOString() : new Date().toISOString(),
+            }))
 
-            // Simplified: Just fetch from a known test project ID if possible, or skip if no project.
-            // Since we don't have the project ID easily here without context, let's skip implementation of fetch 
-            // until we have a proper ProjectContext. 
-            // BUT, the plan said "fetchFiles". Let's try to query by userId.
-
-            // Actually, let's just use a hardcoded "test-project-id" for the migration verification 
-            // if we can't find one, to match the plan's "Assumption: single project".
-
-            // TODO: Implement proper project resolution
-            console.log('Fetching files... (Project resolution pending)')
+            set({ files: mappedFiles })
+            console.log(`📁 Fetched ${mappedFiles.length} files`)
 
         } catch (error) {
             console.error('Failed to fetch files:', error)
@@ -85,23 +87,16 @@ export const useMediaStore = create<MediaState>()((set, get) => ({
         set({ isUploading: true })
 
         try {
-            const { storageService } = await import('@/lib/firebase/storage')
-            const { firestoreService } = await import('@/lib/firebase/firestore')
-            const { authService } = await import('@/lib/firebase/auth')
+            const user = await authService.getCurrentUser()
+            if (!user) throw new Error('User not authenticated')
 
-            const user = authService.getCurrentUser()
-            const userId = user?.uid || 'test-user-123'
-
-            // Mock project ID for now - in real app this comes from route/context
-            const projectId = 'test-project-123'
-
-            const path = `projects/${projectId}/assets/${Date.now()}_${file.name}`
-            const downloadUrl = await storageService.uploadFile(path, file)
+            const path = `clients/${user.id}/media/${Date.now()}_${file.name}`
+            const uploadedFile = await storageService.upload(file, { folder: `clients/${user.id}/media` })
 
             const newFile: MediaFile = {
-                id: Math.random().toString(36).substr(2, 9), // Temp ID until saved
+                id: uploadedFile.id, // Will be replaced by Firestore ID
                 name: file.name,
-                url: downloadUrl,
+                url: uploadedFile.url,
                 type: file.type.startsWith('image/') ? 'image' : 'document',
                 size: `${(file.size / 1024).toFixed(1)} KB`,
                 folderId: get().currentFolderId === 'all' ? 'images' : get().currentFolderId,
@@ -109,8 +104,8 @@ export const useMediaStore = create<MediaState>()((set, get) => ({
             }
 
             // Save metadata to Firestore
-            const fileId = await firestoreService.createDocument(`projects/${projectId}/assets`, newFile)
-            newFile.id = fileId // Update with real ID
+            const savedDoc = await databaseService.create(`clients/${user.id}/media`, newFile)
+            newFile.id = savedDoc.id
 
             set((state) => ({
                 files: [newFile, ...state.files],
@@ -130,17 +125,14 @@ export const useMediaStore = create<MediaState>()((set, get) => ({
         if (!file) return
 
         try {
-            const { storageService } = await import('@/lib/firebase/storage')
-            const { firestoreService } = await import('@/lib/firebase/firestore')
+            const user = await authService.getCurrentUser()
+            if (!user) return
 
-            // Mock project ID
-            const projectId = 'test-project-123'
+            // Delete from Firestore
+            await databaseService.delete(`clients/${user.id}/media`, fileId)
 
-            // Delete from Storage (we need the path, but we only have URL. 
-            // In a real app, we should store the storage path or extract it from URL)
-            // For now, let's just delete the metadata from Firestore
-
-            await firestoreService.deleteDocument(`projects/${projectId}/assets`, fileId)
+            // Delete from Storage (optional, if we stored the path or ID correctly)
+            // storageService.delete(file.storagePath) 
 
             set((state) => ({
                 files: state.files.filter((f) => f.id !== fileId),

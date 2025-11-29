@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { UserDocument, ProjectDocument, TicketDocument } from '@/lib/schemas/firebase'
+import { databaseService } from '@/services/database'
 
 interface AdminState {
     projects: ProjectDocument[]
@@ -31,13 +32,11 @@ export const useAdminStore = create<AdminState>()((set, get) => ({
     fetchDashboardData: async () => {
         set({ isLoading: true })
         try {
-            const { firestoreService } = await import('@/lib/firebase/firestore')
-
             // Parallel fetch
             const [projects, users, tickets] = await Promise.all([
-                firestoreService.queryDocuments<ProjectDocument>('projects', []),
-                firestoreService.queryDocuments<UserDocument>('users', []),
-                firestoreService.queryDocuments<TicketDocument>('tickets', [])
+                databaseService.query<any>('projects'),
+                databaseService.query<any>('users'),
+                databaseService.query<any>('tickets')
             ])
 
             // Calculate stats

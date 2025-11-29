@@ -1,0 +1,40 @@
+Key Highlights
+Architecture Essentials
+Dual app structure: Main CRM app + Template gallery system (separate Next.js apps)
+Firebase-first backend: Direct client SDK usage, NO API routes for CRUD
+Zustand state management: Performance-optimized stores over Context API
+App Shell pattern: Conditional layouts based on route hierarchy
+Critical Patterns
+Schema-first data modeling with strict TypeScript interfaces
+Feature-based component organization (not UI primitives)
+Directive-driven development - SOPs for AI agents in directives
+Authentication via custom provider with real-time Firestore sync
+Developer Workflows
+Standard Next.js commands (npm run dev, npm run build)
+Firebase remote services (no local emulators)
+Independent template system development
+Dark mode first design philosophy
+Integration Points
+Onboarding flow (multi-step → Firestore)
+Real-time chat (Firestore + onSnapshot)
+Media vault (Firebase Storage + metadata)
+Stripe billing (webhook → Firestore sync)
+Admin dashboard (separate layout + privileged operations)
+Pitfalls & Best Practices
+✅ Use Firebase client SDK directly
+✅ Check directives before implementing
+✅ Strictly type everything
+❌ Don't create API routes for Firestore CRUD
+❌ Don't manually edit Shadcn components
+Areas for Your Feedback
+Firebase Admin Pattern: I noticed the admin operations use a separate SDK - should I add more guidance about when to use server-side admin SDK vs client SDK?
+
+Template Integration Status: The template system lives in a separate folder - is this being actively migrated into the main app, or should it stay independent?
+
+Missing Schemas: I saw references to user roles and admin permissions in the admin dashboard - should I add guidance about implementing role-based access control?
+
+Environment Variables: Should I document the complete list of required env vars, or is the Firebase directive reference sufficient?
+
+Testing Strategy: I didn't see any test files - are there testing conventions I should document, or is this project relying on manual testing?
+
+Let me know if you'd like me to expand any sections or add coverage for specific workflows!

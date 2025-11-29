@@ -80,8 +80,8 @@ export const Step1BusinessInfo = () => {
                             key={industry.id}
                             onClick={() => updateBusinessInfo({ industry: industry.id })}
                             className={`p-4 border-2 rounded-lg text-left transition-all hover:scale-105 ${businessInfo.industry === industry.id
-                                    ? 'border-brand-purple bg-brand-purple/10 ring-2 ring-brand-purple/30'
-                                    : 'border-gray-200 hover:border-brand-purple/50'
+                                ? 'border-brand-purple bg-brand-purple/10 ring-2 ring-brand-purple/30'
+                                : 'border-gray-200 hover:border-brand-purple/50'
                                 }`}
                         >
                             <div className="text-3xl mb-2">{industry.icon}</div>
@@ -105,16 +105,15 @@ export const Step1BusinessInfo = () => {
                 <label className="block text-sm font-medium text-gray-900 mb-2">
                     Where are you based?
                 </label>
-                <p className="text-sm text-gray-500 mb-2">
-                    This helps us target the right customers for you
-                </p>
                 <input
                     type="text"
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20"
-                    placeholder="e.g. Manchester, Leeds, Birmingham..."
                     value={businessInfo.location}
                     onChange={(e) => updateBusinessInfo({ location: e.target.value })}
                 />
+                <p className="text-sm text-gray-500 mt-2">
+                    This helps us target the right customers for you
+                </p>
             </div>
 
             {/* Service Type */}
@@ -136,8 +135,8 @@ export const Step1BusinessInfo = () => {
                                 })
                             }
                             className={`p-4 border-2 rounded-lg transition-all ${businessInfo.serviceType === option.id
-                                    ? 'border-brand-purple bg-brand-purple/10 ring-2 ring-brand-purple/30'
-                                    : 'border-gray-200 hover:border-brand-purple/50'
+                                ? 'border-brand-purple bg-brand-purple/10 ring-2 ring-brand-purple/30'
+                                : 'border-gray-200 hover:border-brand-purple/50'
                                 }`}
                         >
                             <div className="text-2xl mb-1">{option.emoji}</div>
@@ -167,8 +166,8 @@ export const Step1BusinessInfo = () => {
                                 })
                             }
                             className={`p-3 border-2 rounded-lg transition-all ${businessInfo.yearsInBusiness === option.id
-                                    ? 'border-brand-purple bg-brand-purple/10 ring-2 ring-brand-purple/30'
-                                    : 'border-gray-200 hover:border-brand-purple/50'
+                                ? 'border-brand-purple bg-brand-purple/10 ring-2 ring-brand-purple/30'
+                                : 'border-gray-200 hover:border-brand-purple/50'
                                 }`}
                         >
                             <div className="font-medium text-gray-900 text-sm">{option.label}</div>
